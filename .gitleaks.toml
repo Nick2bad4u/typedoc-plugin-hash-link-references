@@ -1,0 +1,4 @@
+title = "typedoc-plugin-hash-link-references secret scanning"
+
+[extend]
+    useDefault = true
