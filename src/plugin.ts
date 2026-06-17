@@ -12,7 +12,7 @@ const RUN_BEFORE_LINK_RESOLVER_PRIORITY = 50;
  *
  * @param app - TypeDoc app instance.
  */
-export function load(app: Application): void {
+export function load(app: Readonly<Application>): void {
     app.converter.on(
         Converter.EVENT_RESOLVE_END,
         (context) => {

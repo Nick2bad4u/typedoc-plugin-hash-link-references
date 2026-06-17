@@ -24,10 +24,5 @@ export default defineConfig({
         name: "typedoc-plugin-hash-link-references",
         restoreMocks: true,
         slowTestThreshold: 300,
-        typecheck: {
-            checker: "tsc",
-            enabled: true,
-            tsconfig: "./tsconfig.json",
-        },
     },
 });

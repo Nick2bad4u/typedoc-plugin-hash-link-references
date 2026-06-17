@@ -1,6 +1,6 @@
 import type { Comment, CommentDisplayPart } from "typedoc";
 
-import { setHas } from "ts-extras";
+import { safeCastTo, setHas } from "ts-extras";
 
 const URL_LIKE_SCHEMES: ReadonlySet<string> = new Set([
     "blob",
@@ -23,7 +23,9 @@ const INLINE_LINK_TAGS: ReadonlySet<`@${string}`> = new Set([
  *
  * @param comment - Comment to update.
  */
-export function convertHashLinksToBangLinksInComment(comment: Comment): void {
+export function convertHashLinksToBangLinksInComment(
+    comment: Readonly<Comment>
+): void {
     convertHashLinksToBangLinksInParts(comment.summary);
     for (const tag of comment.blockTags) {
         convertHashLinksToBangLinksInParts(tag.content);
@@ -87,9 +89,11 @@ export function convertHashLinksToBangLinksInInlineTagText(
  *   rewritten.
  */
 export function convertHashLinksToBangLinksInParts(
-    parts: CommentDisplayPart[]
+    parts: readonly Readonly<CommentDisplayPart>[]
 ): void {
-    for (const part of parts) {
+    for (const readonlyPart of parts) {
+        const part = safeCastTo<CommentDisplayPart>(readonlyPart);
+
         if (part.kind === "inline-tag" && setHas(INLINE_LINK_TAGS, part.tag)) {
             const rewritten = convertHashLinksToBangLinksInInlineTagText(
                 part.text

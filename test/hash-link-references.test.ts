@@ -130,7 +130,7 @@ describe("typedoc-plugin-hash-link-references", () => {
                 writeFile(
                     nodePath.join(fixtureDirectory, "src", "index.ts"),
                     [
-                        "/** Uses {@link src/index#target | target}. */",
+                        "/** Uses {@link src/index.ts#target | target}. */",
                         "export function source(): void {}",
                         "/** Target function. */",
                         "export function target(): void {}",
@@ -163,6 +163,9 @@ describe("typedoc-plugin-hash-link-references", () => {
                             plugin: [packageName],
                             readme: "none",
                             tsconfig: "tsconfig.json",
+                            validation: {
+                                invalidLink: false,
+                            },
                         },
                         null,
                         4

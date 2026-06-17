@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" role="img" viewBox="0 0 256 256">
+  <title>typedoc-plugin-hash-link-references logo</title>
+  <defs>
+    <linearGradient id="bg" x1="24" x2="232" y1="32" y2="224" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#312e81"/>
+      <stop offset="0.55" stop-color="#4f46e5"/>
+      <stop offset="1" stop-color="#22d3ee"/>
+    </linearGradient>
+  </defs>
+  <rect width="256" height="256" rx="48" fill="url(#bg)"/>
+  <path fill="#fff" d="M78 66h25l-7 42h44l7-42h25l-7 42h31v25h-35l-7 42h31v25h-35l-7 38h-25l7-38H81l-7 38H49l7-38H24v-25h36l7-42H35v-25h36l7-42Zm14 67-7 42h44l7-42H92Z"/>
+  <path fill="#cffafe" d="M176 166h26l-21 21 21 21h-26l-21-21 21-21Z"/>
+</svg>

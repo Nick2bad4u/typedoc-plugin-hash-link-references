@@ -1,0 +1,15 @@
+{
+    "background_color": "#111827",
+    "display": "standalone",
+    "icons": [
+        {
+            "sizes": "any",
+            "src": "img/logo.svg",
+            "type": "image/svg+xml"
+        }
+    ],
+    "name": "typedoc-plugin-hash-link-references",
+    "short_name": "hash-link-references",
+    "start_url": "/typedoc-plugin-hash-link-references/",
+    "theme_color": "#4f46e5"
+}
