@@ -7,7 +7,7 @@ import {
     convertHashLinksToBangLinksInComment,
     convertHashLinksToBangLinksInInlineTagText,
     convertHashLinksToBangLinksInParts,
-} from "../hash-link-references-core.mjs";
+} from "../src/core.js";
 
 const packageName = "typedoc-plugin-hash-link-references";
 const fixtureDirectory = nodePath.join(".cache", "typedoc-fixture");

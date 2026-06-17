@@ -1,13 +1,8 @@
-// @ts-check
+import type { Comment, CommentDisplayPart } from "typedoc";
 
-/**
- * @typedef {import("typedoc").Comment} Comment
- *
- * @typedef {import("typedoc").CommentDisplayPart} CommentDisplayPart
- */
+import { setHas } from "ts-extras";
 
-/** @type {ReadonlySet<string>} */
-const URL_LIKE_SCHEMES = new Set([
+const URL_LIKE_SCHEMES: ReadonlySet<string> = new Set([
     "blob",
     "data",
     "file",
@@ -16,8 +11,7 @@ const URL_LIKE_SCHEMES = new Set([
     "urn",
 ]);
 
-/** @type {ReadonlySet<string>} */
-const INLINE_LINK_TAGS = new Set([
+const INLINE_LINK_TAGS: ReadonlySet<`@${string}`> = new Set([
     "@link",
     "@linkcode",
     "@linkplain",
@@ -27,11 +21,9 @@ const INLINE_LINK_TAGS = new Set([
  * Mutates a TypeDoc comment in-place, rewriting repo-style `path#Symbol` links
  * into TypeDoc declaration references (`path!Symbol`).
  *
- * @param {Comment} comment
- *
- * @returns {void}
+ * @param comment - Comment to update.
  */
-export function convertHashLinksToBangLinksInComment(comment) {
+export function convertHashLinksToBangLinksInComment(comment: Comment): void {
     convertHashLinksToBangLinksInParts(comment.summary);
     for (const tag of comment.blockTags) {
         convertHashLinksToBangLinksInParts(tag.content);
@@ -42,11 +34,11 @@ export function convertHashLinksToBangLinksInComment(comment) {
  * Rewrites `module#Export` to `module!Export` for module-source-like
  * references. Whitespace and `| label` suffixes are preserved.
  *
- * @param {string} inlineTagText - The inline-tag payload stored by TypeDoc.
- *
- * @returns {string}
+ * @param inlineTagText - The inline-tag payload stored by TypeDoc.
  */
-export function convertHashLinksToBangLinksInInlineTagText(inlineTagText) {
+export function convertHashLinksToBangLinksInInlineTagText(
+    inlineTagText: string
+): string {
     const pipeIndex = inlineTagText.indexOf("|");
     const beforePipe =
         pipeIndex === -1 ? inlineTagText : inlineTagText.slice(0, pipeIndex);
@@ -91,13 +83,14 @@ export function convertHashLinksToBangLinksInInlineTagText(inlineTagText) {
 /**
  * Mutates TypeDoc display parts in-place.
  *
- * @param {CommentDisplayPart[]} parts
- *
- * @returns {void}
+ * @param parts - Display parts collection whose inline-tag text may be
+ *   rewritten.
  */
-export function convertHashLinksToBangLinksInParts(parts) {
+export function convertHashLinksToBangLinksInParts(
+    parts: CommentDisplayPart[]
+): void {
     for (const part of parts) {
-        if (part.kind === "inline-tag" && INLINE_LINK_TAGS.has(part.tag)) {
+        if (part.kind === "inline-tag" && setHas(INLINE_LINK_TAGS, part.tag)) {
             const rewritten = convertHashLinksToBangLinksInInlineTagText(
                 part.text
             );
@@ -111,12 +104,7 @@ export function convertHashLinksToBangLinksInParts(parts) {
     }
 }
 
-/**
- * @param {string} moduleSource
- *
- * @returns {boolean}
- */
-function isModuleSourceLike(moduleSource) {
+function isModuleSourceLike(moduleSource: string): boolean {
     return (
         moduleSource.includes("/") ||
         moduleSource.includes("\\") ||
@@ -126,12 +114,7 @@ function isModuleSourceLike(moduleSource) {
     );
 }
 
-/**
- * @param {string} moduleSource
- *
- * @returns {boolean}
- */
-function isUrlLike(moduleSource) {
+function isUrlLike(moduleSource: string): boolean {
     if (moduleSource.includes("://")) {
         return true;
     }
@@ -150,5 +133,5 @@ function isUrlLike(moduleSource) {
         return false;
     }
 
-    return URL_LIKE_SCHEMES.has(scheme.toLowerCase());
+    return setHas(URL_LIKE_SCHEMES, scheme.toLowerCase());
 }
