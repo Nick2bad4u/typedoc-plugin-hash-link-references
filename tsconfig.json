@@ -1,0 +1,35 @@
+{
+    "$schema": "https://www.schemastore.org/tsconfig.json",
+    "compilerOptions": {
+        "allowJs": true,
+        "checkJs": true,
+        "declaration": false,
+        "esModuleInterop": true,
+        "exactOptionalPropertyTypes": true,
+        "forceConsistentCasingInFileNames": true,
+        "isolatedModules": true,
+        "module": "NodeNext",
+        "moduleResolution": "NodeNext",
+        "noEmit": true,
+        "noUncheckedIndexedAccess": true,
+        "resolveJsonModule": true,
+        "skipLibCheck": true,
+        "strict": true,
+        "target": "ES2024",
+        "types": [
+            "node"
+        ]
+    },
+    "exclude": [
+        ".cache/**",
+        "coverage/**",
+        "node_modules/**"
+    ],
+    "include": [
+        "*.d.mts",
+        "hash-link-references.mjs",
+        "hash-link-references-core.mjs",
+        "test/**/*.ts",
+        "vite.config.ts"
+    ]
+}
