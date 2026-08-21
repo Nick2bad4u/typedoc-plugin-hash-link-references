@@ -226,15 +226,23 @@ describe("typedoc-plugin-hash-link-references", () => {
     });
 
     it("resolves source paths across repeated real TypeDoc conversions", async () => {
-        expect.assertions(4);
+        expect.assertions(8);
 
         await rm(programmaticFixtureDirectory, {
             force: true,
             recursive: true,
         });
-        await mkdir(nodePath.join(programmaticFixtureDirectory, "src"), {
-            recursive: true,
-        });
+        await Promise.all([
+            mkdir(nodePath.join(programmaticFixtureDirectory, "src", "owner"), {
+                recursive: true,
+            }),
+            mkdir(
+                nodePath.join(programmaticFixtureDirectory, "src", "unrelated"),
+                {
+                    recursive: true,
+                }
+            ),
+        ]);
 
         const entryPointPath = nodePath
             .resolve(programmaticFixtureDirectory, "src", "index.ts")
@@ -258,6 +266,34 @@ describe("typedoc-plugin-hash-link-references", () => {
                         "export function sourceRelative(): void {}",
                         "/** Target function. */",
                         "export function target(): void {}",
+                        'export { sourceScoped } from "./owner/index.js";',
+                        'export { wrongTarget } from "./unrelated/foo.js";',
+                        "",
+                    ].join("\n")
+                ),
+                writeFile(
+                    nodePath.join(
+                        programmaticFixtureDirectory,
+                        "src",
+                        "owner",
+                        "index.ts"
+                    ),
+                    [
+                        "/** Uses {@link ./foo.ts#wrongTarget | scoped missing target}. */",
+                        "export function sourceScoped(): void {}",
+                        "",
+                    ].join("\n")
+                ),
+                writeFile(
+                    nodePath.join(
+                        programmaticFixtureDirectory,
+                        "src",
+                        "unrelated",
+                        "foo.ts"
+                    ),
+                    [
+                        "/** An unrelated function with the requested name. */",
+                        "export function wrongTarget(): void {}",
                         "",
                     ].join("\n")
                 ),
@@ -321,12 +357,24 @@ describe("typedoc-plugin-hash-link-references", () => {
                     ),
                     "utf8"
                 );
+                const scopedSourceHtml = await readFile(
+                    nodePath.join(
+                        outputDirectory,
+                        "functions",
+                        "sourceScoped.html"
+                    ),
+                    "utf8"
+                );
 
                 expect(rootSourceHtml).toMatch(
                     /href="target\.html"[^>]*>root target<\/a>/v
                 );
                 expect(relativeSourceHtml).toMatch(
                     /href="target\.html"[^>]*>relative target<\/a>/v
+                );
+                expect(scopedSourceHtml).toContain("scoped missing target");
+                expect(scopedSourceHtml).not.toMatch(
+                    /href="[^"]*"[^>]*>scoped missing target<\/a>/v
                 );
             }
         } finally {

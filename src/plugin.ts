@@ -223,8 +223,8 @@ function indexSourceReflections(
  * Check whether a target reflection is declared by the referenced source file.
  *
  * Root-relative authoring paths are matched against source suffixes. Explicit
- * relative paths are also resolved from every source associated with the
- * comment owner.
+ * relative paths are resolved only from sources associated with the comment
+ * owner, preventing a missing sibling from matching an unrelated file.
  *
  * @param candidate - Potential target reflection.
  * @param owner - Reflection which owns the link.
@@ -238,6 +238,9 @@ function isReflectionDeclaredByModuleSource(
     moduleSource: string
 ): boolean {
     const normalizedModuleSource = normalizeSourcePath(moduleSource);
+    const isExplicitlyRelativeSource = /^\.{1,2}\//v.test(
+        normalizedModuleSource
+    );
     const suffixModuleSource = normalizedModuleSource.replace(/^\.\//v, "");
     const ownerRelativePaths = new Set(
         getReflectionSourcePaths(owner).map((ownerSourcePath) =>
@@ -256,7 +259,8 @@ function isReflectionDeclaredByModuleSource(
 
         return (
             normalizedCandidateSource === normalizedModuleSource ||
-            normalizedCandidateSource.endsWith(`/${suffixModuleSource}`) ||
+            (!isExplicitlyRelativeSource &&
+                normalizedCandidateSource.endsWith(`/${suffixModuleSource}`)) ||
             setHas(ownerRelativePaths, normalizedCandidateSource)
         );
     });
