@@ -28,8 +28,10 @@ Then keep writing hash-style inline links in comments:
 export function createConfig(): void {}
 ```
 
-The plugin runs before TypeDoc's own link resolver, so TypeDoc receives a
-declaration reference using `!` instead of `#`.
+The plugin runs before TypeDoc's own link resolver. It finds the `loadConfig`
+reflection associated with `src/config.ts` and attaches that reflection as the
+link target. This is important because TypeDoc's `module!Export` syntax expects
+a module name before `!`, not a source-file path.
 
 ## With typedoc-plugin-markdown
 

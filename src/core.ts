@@ -2,14 +2,7 @@ import type { Comment, CommentDisplayPart } from "typedoc";
 
 import { safeCastTo, setHas } from "ts-extras";
 
-const URL_LIKE_SCHEMES: ReadonlySet<string> = new Set([
-    "blob",
-    "data",
-    "file",
-    "mailto",
-    "tel",
-    "urn",
-]);
+const URI_SCHEME_PATTERN = /^[A-Za-z][\d+\-.A-Za-z]*$/v;
 
 const INLINE_LINK_TAGS: ReadonlySet<`@${string}`> = new Set([
     "@link",
@@ -137,5 +130,5 @@ function isUrlLike(moduleSource: string): boolean {
         return false;
     }
 
-    return setHas(URL_LIKE_SCHEMES, scheme.toLowerCase());
+    return scheme.toLowerCase() !== "node" && URI_SCHEME_PATTERN.test(scheme);
 }
