@@ -32,11 +32,12 @@ const isRecord = (value) => typeof value === "object" && value !== null;
  * @throws {TypeError} If the metadata shape or filename is invalid
  */
 export const readNpmPackFilename = (packMetadata) => {
-    const records = Array.isArray(packMetadata)
-        ? packMetadata
-        : isRecord(packMetadata)
-          ? Object.values(packMetadata)
-          : [];
+    let records = [];
+    if (Array.isArray(packMetadata)) {
+        records = packMetadata;
+    } else if (isRecord(packMetadata)) {
+        records = Object.values(packMetadata);
+    }
 
     if (records.length !== 1) {
         throw new TypeError("Expected exactly one npm pack metadata record.");
