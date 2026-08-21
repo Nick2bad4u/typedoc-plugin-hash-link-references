@@ -265,6 +265,7 @@ jobs:
                     echo "git-cliff did not generate CHANGELOG.md." >&2
                     exit 1
                   fi
+                  ./node_modules/.bin/prettier CHANGELOG.md --write --log-level warn
 
             - name: "Check whether version is already published"
               id: "npm_check"
