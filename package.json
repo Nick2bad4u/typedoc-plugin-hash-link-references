@@ -1,7 +1,7 @@
 {
     "$schema": "https://www.schemastore.org/package.json",
     "name": "typedoc-plugin-hash-link-references",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "private": false,
     "description": "TypeDoc plugin that resolves VS Code-friendly path#Symbol links to source-backed TypeDoc reflections.",
     "keywords": [
