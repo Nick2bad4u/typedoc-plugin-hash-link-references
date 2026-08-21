@@ -121,16 +121,29 @@ jobs:
                   cache: "npm"
                   cache-dependency-path: "package-lock.json"
 
+            - name: "Install pinned npm"
+              run: |
+                  set -euo pipefail
+                  if [ "$(node -p "require('./package.json').packageManager")" != "npm@12.0.2" ]; then
+                    echo "package.json must pin npm@12.0.2." >&2
+                    exit 1
+                  fi
+                  npm install --global --ignore-scripts npm@12.0.2
+                  if [ "$(npm --version)" != "12.0.2" ]; then
+                    echo "Expected npm 12.0.2 after bootstrap." >&2
+                    exit 1
+                  fi
+
             - name: "Install native lint tools"
               run: |
                   set -euo pipefail
-                  go install github.com/zricethezav/gitleaks/v8@v8.30.1
+                  go install github.com/zricethezav/gitleaks/v8@83d9cd684c87d95d656c1458ef04895a7f1cbd8e
                   echo "${HOME}/go/bin" >> "${GITHUB_PATH}"
                   python -m pip install --user --disable-pip-version-check yamllint==1.38.0
                   echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
 
             - name: "Install dependencies"
-              run: "npm ci --force"
+              run: "npm ci"
 
             - name: "Configure Git for release automation"
               if: "github.event_name == 'workflow_dispatch'"
@@ -188,11 +201,10 @@ jobs:
               run: "npm run release:check"
 
             - name: "Ensure verification did not modify tracked files"
-              if: "startsWith(github.ref, 'refs/tags/v')"
               run: |
                   set -euo pipefail
                   if ! git diff --quiet || ! git diff --cached --quiet; then
-                    echo "release:check modified files on a tag-triggered release. Ensure main is clean before tagging." >&2
+                    echo "release:check modified tracked files. Verification must be read-only." >&2
                     git status --short
                     exit 1
                   fi
@@ -237,6 +249,23 @@ jobs:
               if: "github.event_name == 'workflow_dispatch'"
               run: "npm run build"
 
+            - name: "Generate changelog for manual release"
+              if: "github.event_name == 'workflow_dispatch'"
+              env:
+                  GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+                  TAG: "${{ steps.version.outputs.tag }}"
+              run: |
+                  set -euo pipefail
+                  ./node_modules/.bin/git-cliff \
+                    --config node_modules/gitcliff-config-nick2bad4u/cliff.toml \
+                    --github-repo "${GITHUB_REPOSITORY}" \
+                    --tag "$TAG" \
+                    --output CHANGELOG.md
+                  if [ ! -s CHANGELOG.md ]; then
+                    echo "git-cliff did not generate CHANGELOG.md." >&2
+                    exit 1
+                  fi
+
             - name: "Check whether version is already published"
               id: "npm_check"
               env:
@@ -273,13 +302,36 @@ jobs:
                     exit 1
                   fi
 
-                  git add -A
-                  if git diff --cached --quiet; then
-                    echo "No staged changes found for release commit." >&2
+                  mapfile -t changed_paths < <(
+                    {
+                      git diff --name-only
+                      git diff --cached --name-only
+                      git ls-files --others --exclude-standard
+                    } | sort -u
+                  )
+                  for changed_path in "${changed_paths[@]}"; do
+                    case "$changed_path" in
+                      CHANGELOG.md|package.json|package-lock.json)
+                        ;;
+                      *)
+                        echo "Unexpected release-generated path: $changed_path" >&2
+                        exit 1
+                        ;;
+                    esac
+                  done
+
+                  git add -- CHANGELOG.md package.json package-lock.json
+                  mapfile -t staged_paths < <(git diff --cached --name-only)
+                  if [ "${#staged_paths[@]}" -ne 3 ] ||
+                    [ "${staged_paths[0]}" != "CHANGELOG.md" ] ||
+                    [ "${staged_paths[1]}" != "package-lock.json" ] ||
+                    [ "${staged_paths[2]}" != "package.json" ]; then
+                    echo "Release commit must contain only CHANGELOG.md, package-lock.json, and package.json." >&2
+                    printf 'Staged: %s\n' "${staged_paths[@]}" >&2
                     exit 1
                   fi
 
-                  git commit -m "chore: release ${TAG}"
+                  git commit -m "🚀 [chore] release ${TAG}"
                   git tag -a "$TAG" -m "$TAG"
                   git push origin "HEAD:${BRANCH}"
                   git push origin "$TAG"
@@ -320,7 +372,11 @@ jobs:
                   fi
 
                   mkdir -p temp
-                  npm run --silent changelog:release-notes -- --output "${RELEASE_NOTES_PATH}"
+                  ./node_modules/.bin/git-cliff \
+                    --config node_modules/gitcliff-config-nick2bad4u/cliff.toml \
+                    --github-repo "${GITHUB_REPOSITORY}" \
+                    --current \
+                    --output "${RELEASE_NOTES_PATH}"
                   if [ ! -s "${RELEASE_NOTES_PATH}" ]; then
                     echo "No release notes were generated by git-cliff." > "${RELEASE_NOTES_PATH}"
                   fi
@@ -349,13 +405,13 @@ jobs:
                   npm pack --json --pack-destination "$assets_dir" > "$pack_metadata_path"
 
                   tarball_filename=$(
-                    node -e "
-                      const fs = require('node:fs');
-                      const packMetadata = JSON.parse(fs.readFileSync(process.argv[1], 'utf8'));
-                      process.stdout.write(packMetadata[0].filename);
-                    " "$pack_metadata_path"
+                    node scripts/read-npm-pack-filename.mjs "$pack_metadata_path"
                   )
                   tarball_path="${assets_dir}/${tarball_filename}"
+                  if [ ! -f "$tarball_path" ]; then
+                    echo "npm pack did not create the expected tarball: $tarball_path" >&2
+                    exit 1
+                  fi
                   safe_package_name=$(printf '%s' "$PACKAGE_NAME" | sed 's/^@//; s#/#-#g')
                   zip_basename="${safe_package_name}-${VERSION}"
 

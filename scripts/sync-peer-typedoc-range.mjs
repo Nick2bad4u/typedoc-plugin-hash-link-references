@@ -70,7 +70,27 @@ const readPackageJson = async () => {
  */
 const isRecord = (value) => typeof value === "object" && value !== null;
 
+/**
+ * Parse command-line arguments.
+ *
+ * @param {readonly string[]} argumentList
+ *
+ * @returns {{ checkOnly: boolean }}
+ *
+ * @throws {TypeError} If an unsupported argument is provided
+ */
+const parseArguments = (argumentList) => {
+    for (const argument of argumentList) {
+        if (argument !== "--check") {
+            throw new TypeError(`Unknown argument: ${argument}`);
+        }
+    }
+
+    return { checkOnly: argumentList.includes("--check") };
+};
+
 const main = async () => {
+    const { checkOnly } = parseArguments(process.argv.slice(2));
     /** @type {Record<string, unknown>} */
     const packageJson = await readPackageJson();
 
@@ -109,6 +129,16 @@ const main = async () => {
         );
         /** @type {void} */
         return;
+    }
+
+    if (checkOnly) {
+        throw new TypeError(
+            [
+                "peerDependencies.typedoc is out of sync.",
+                `Expected: ${nextPeerTypeDocRange}.`,
+                `Actual: ${String(peerDependencies["typedoc"])}.`,
+            ].join(" ")
+        );
     }
 
     peerDependencies["typedoc"] = nextPeerTypeDocRange;

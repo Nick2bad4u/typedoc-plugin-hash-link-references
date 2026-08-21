@@ -1,0 +1,8 @@
+#:schema https://www.schemastore.org/tombi.json
+
+toml-version = "v1.0.0"
+
+[format.rules]
+indent-sub-tables = false
+indent-table-key-value-pairs = false
+line-ending = "lf"
